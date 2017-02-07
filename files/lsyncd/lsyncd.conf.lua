@@ -33,7 +33,7 @@ initSync = {
         action = function(inlet) 
                 local config = inlet.getConfig() 
                 local elist = inlet.getEvents(function(event) 
-                        return event.etype ~= "Blanket" 
+                        return event.etype ~= "Init" 
                 end) 
                 local directory = string.sub(config.source, 1, -2) 
                 local paths = elist.getPaths(function(etype, path) 
@@ -45,7 +45,7 @@ initSync = {
         end, 
         collect = function(agent, exitcode) 
                 local config = agent.config 
-                if not agent.isList and agent.etype == "Blanket" then 
+                if not agent.isList and agent.etype == "Init" then 
                         if exitcode == 0 then 
                                 log("Normal", "Startup of '", config.syncid, "' instance finished.") 
                         elseif config.exitcodes and config.exitcodes[exitcode] == "again" then 
@@ -76,19 +76,17 @@ initSync = {
                 end 
                 return rc 
         end, 
-        init = function(inlet) 
-                local config = inlet.getConfig() 
-                local event = inlet.createBlanketEvent()
-                local configid = string.gsub(config.syncid, '%W', '')
+        init = function(event) 
+                local inlet = event.inlet()
+                local config = inlet.getConfig()
                 log("Normal", "Recursive startup sync: ", config.syncid, ":", config.source) 
-                spawn(event, "/usr/sbin/csync2", "-C", configid, "-x") 
+                spawn(event, "/usr/sbin/csync2", "-C", config.syncid, "-x") 
         end, 
         prepare = function(config) 
                 if not config.syncid then 
                         error("Missing 'syncid' parameter.", 4) 
                 end
-                local configid = string.gsub(config.syncid, '%W', '')
-                local c = "csync2_" .. configid .. ".cfg" 
+                local c = "csync2_" .. config.syncid .. ".cfg"
                 local f, err = io.open("/etc/csync2/" .. c, "r") 
                 if not f then 
                         error("Invalid 'syncid' parameter: " .. err, 4) 
@@ -98,10 +96,10 @@ initSync = {
 } 
 
 local sources = {
-{% set hostname = salt['grains.get']('host', 'localhost') %}
-{% for inc in sync.includes %}
+{%- set hostname = salt['grains.get']('host', 'localhost') %}
+{%- for inc in sync.includes %}
         ["{{ inc }}"] = "{{ hostname }}"
-{% endfor %}
+{%- endfor %}
 } 
 for key, value in pairs(sources) do 
         sync {initSync, source=key, syncid=value} 
