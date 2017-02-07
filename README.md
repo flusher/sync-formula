@@ -3,7 +3,7 @@
 This formula utilizes lsyncd, csync2, and xinetd.
 
 These states are very, very version specific.
-Only tested so far on Ubuntu 12.04, Lsyncd 2.0.4. The lua for the lsyncd
+Only tested so far on Debian 8.7, Lsyncd 2.1.5. The lua for the lsyncd
 configuration will need to change if using other versions of lsyncd. This
 formula may be altered in the future to provide different lsyncd
 configurations for the different versions of lsyncd.
@@ -27,11 +27,12 @@ sync:
   # Need to indicate how to determine what other minions to sync with.
   # This will translate to salt['mine.get'](target, some_func, expr_form)
   # inside of settings.jinja.
-
   # Default: roles:web
+  # Example: '*.to-sync.example.com'
   target: roles:web
 
   # Default: grains
+  # Example: 'glob' to match on minion ids
   expr_type: grains
 
   # Name of the sync group
@@ -49,7 +50,7 @@ sync:
   excludes:
     - /var/www/*log
 
-  # How to resolve conflicts (older, newer, or none)
+  # How to resolve conflicts (older, younger, or none)
   # Default: none
   conflict: none
 
